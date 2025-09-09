@@ -1,4 +1,4 @@
-# Oppimistehtävä: Plants Dashboard (React + TypeScript + CSS)
+# Oppimistehtävä: Plants Dashboard (React + TypeScript + Tailwind CSS)
 
 Rakennetaan React-sovellus, joka näyttää kasvilistan, mahdollistaa kastelun päälle/pois-kytkemisen ja yksityiskohtaisen näkymän yhdelle kasville.  
 
@@ -22,13 +22,40 @@ Rakennetaan React-sovellus, joka näyttää kasvilistan, mahdollistaa kastelun p
 > Tarvittaessa vlitse framework:si React ja variant:ksi TypeScript
 
 
-    ```bash
-    npm create vite@latest plants-dashboard -- --template react-ts
-    cd plants-dashboard
-    npm install
-    ```
-    
-3. Käynnistä kehityspalvelin:
+```bash
+npm create vite@latest plants-dashboard -- --template react-ts
+cd plants-dashboard
+npm install
+```
+
+3. Asenna Tailwind CSS
+
+```bash
+npm install tailwindcss @tailwindcss/vite
+```
+
+Päivitä `vite.config.ts` tiedostoa, lisäämällä sen sisälle `@tailwindcss/vite` pluginin
+
+```ts
+import { defineConfig } from 'vite';
+import react from "@vitejs/plugin-react";
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
+})
+```
+
+Lisää `@import` CSS tiedostoon joka importtaa Tailwind CSS:n, esim. `index.css`
+
+```css
+@import "tailwindcss";
+```
+
+4. Käynnistä kehityspalvelin:
     
     ```bash
     npm run dev
@@ -169,48 +196,43 @@ export const API = {
 ### Malliesimerkki — Kortin rakenne (BookCard → sinulla PlantCard)
 
 ```tsx
-// BookCard.tsx (MALLI — muokkaa omaan domainiin)
-import type { Book } from "../lib/library.types";
-
-export function BookCard({
-  book,
-  onOpen,
-  onToggleFavorite,
-}: {
-  book: Book;
-  onOpen: (id: number) => void;
-  onToggleFavorite: (id: number) => void;
-}) {
-  const shelfBadge =
-    book.shelfStatus === "available" ? "badge badge--ok" :
-    book.shelfStatus === "damaged"   ? "badge badge--fault" :
-                                       "badge badge--offline"; // reused colors
+// BookCard.tsx (MALLI – käännä PlantCardiksi)
+export function BookCard({ book, onOpen, onToggleFavorite }: Props) {
+  const badge =
+    book.shelfStatus === "available" ? "bg-emerald-50 text-emerald-700" :
+    book.shelfStatus === "damaged"   ? "bg-amber-50 text-amber-700"    :
+                                       "bg-rose-50 text-rose-700";
 
   return (
-    <div className="card">
-      <div className="card__row">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-start justify-between">
         <div>
-          <h3 className="card__title">{book.title}</h3>
-          <p className="card__subtitle">{book.author} · {book.location ?? "—"}</p>
+          <h3 className="font-semibold">{book.title}</h3>
+          <p className="text-xs text-slate-500">{book.author} · {book.location ?? "—"}</p>
         </div>
-        <span className={shelfBadge}>{book.shelfStatus}</span>
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${badge}`}>
+          {book.shelfStatus}
+        </span>
       </div>
 
-      <div className="kv-grid">
-        <div>Pages: <strong>{book.pages}</strong></div>
-        <div>Rating: <strong>{book.rating}/5</strong></div>
-        <div>Favorite: <strong>{book.favorite ? "YES" : "NO"}</strong></div>
-        <div>Updated: <span className="mono">{new Date(book.updated_at).toLocaleString()}</span></div>
-      </div>
+      <dl className="grid grid-cols-2 gap-2 text-sm">
+        <div>Pages: <span className="font-semibold">{book.pages}</span></div>
+        <div>Rating: <span className="font-semibold">{book.rating}/5</span></div>
+        <div>Favorite: <span className="font-semibold">{book.favorite ? "YES" : "NO"}</span></div>
+        <div>Updated: <span className="font-mono">{new Date(book.updated_at).toLocaleString()}</span></div>
+      </dl>
 
-      <div className="btn-row">
+      <div className="mt-3 flex gap-2">
         <button
-          className={`btn ${book.favorite ? "btn--danger" : ""}`}
+          className={`rounded-lg px-3 py-2 text-white ${book.favorite ? "bg-rose-600" : "bg-emerald-600"}`}
           onClick={() => onToggleFavorite(book.id)}
         >
           {book.favorite ? "Unfavorite" : "Favorite"}
         </button>
-        <button className="btn btn--secondary" onClick={() => onOpen(book.id)}>
+        <button
+          className="rounded-lg bg-slate-900 px-3 py-2 text-white"
+          onClick={() => onOpen(book.id)}
+        >
           Open
         </button>
       </div>
@@ -257,43 +279,39 @@ export function BooksPage() {
     })();
   }, []);
 
-  async function toggleFavorite(id: number) {        // <- toggle watering
-    // 1) Optimistinen UI
-    setBooks(prev => prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b));
-    try {
-      // 2) Serveri (mock/real)
-      const updated = await LibraryAPI.toggleFavorite(id); // <- API.togglePlantWatering(id)
-      // 3) Päivitä kirjojen tila
-      setBooks(prev => prev.map(b => b.id === id ? updated : b));
-    } catch (e: any) {
-      // 4) Virhe → palauta/ilmoita
-      setError(e.message || String(e));
-      // helppo palautus: refetch
-      const data = await LibraryAPI.listBooks();
-      setBooks(data);
-    }
+  async function handleToggleFav(id: number) {
+  setBooks(prev => prev.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b));
+  try {
+    const updated = await LibraryAPI.toggleFavorite(id);   // API.togglePlantWatering(id)
+    setBooks(prev => prev.map(b => (b.id === id ? updated : b)));
+  } catch (e: any) {
+    setError(e.message || String(e));
+    const fresh = await LibraryAPI.listBooks();            // API.listPlants()
+    setBooks(fresh);
   }
-
-  return (
-    <div className="container">
-      <header className="header">
-        <h1 className="header__title">Books</h1>
-        <p className="header__subtitle">Mock mode – swap to real API later</p>
-      </header>
-
-      <div className="grid">
-        {books.map(book => (
-          <BookCard
-            key={book.id}
-            book={book}
-            onOpen={(id) => console.log("Open", id)}   // <- Task 5: korvaa navigoinnilla
-            onToggleFavorite={toggleFavorite}          // <- onToggleWatering
-          />
-        ))}
-      </div>
-    </div>
-  );
 }
+
+ // BooksPage.tsx (MALLI – käännä omalle domainille)
+return (
+  <div className="mx-auto max-w-5xl p-6">
+    <header className="mb-6">
+      <h1 className="text-2xl font-bold">Books</h1>
+      <p className="text-sm text-slate-500">Mock mode – swap to real API later</p>
+    </header>
+
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {books.map((b) => (
+        <BookCard
+          key={b.id}
+          book={b}
+          onOpen={(id) => console.log("Open", id)}         // nav(`/plants/${id}`)
+          onToggleFavorite={(id) => handleToggleFav(id)}   // toggle watering
+        />
+      ))}
+    </div>
+  </div>
+);
+
 ```
 
 ### 3. Voit testata `PlantsPage` sivun näkymää, kutsumalla komponenttia `App.tsx` tiedoston sisällä
@@ -353,43 +371,42 @@ export function BookDetailPage() {
   const [loading, setLoad]  = useState(true);
   const [error, setError]   = useState<string | null>(null);
 
-  const id = 1; // testaa eri arvoilla; teillä myöhemmin route-param
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setLoad(true);
-        const b = await LibraryAPI.getBook(id); // <- API.getPlant(id)
-        if (alive) setBook(b);
-      } catch (e: any) {
-        setError(e.message || String(e));
-      } finally {
-        setLoad(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, [id]);
+ const id = 1;
+useEffect(() => {
+  let alive = true;
+  (async () => {
+    try {
+      setLoading(true);
+      const item = await LibraryAPI.getBook(id); // teillä: API.getPlant(id)
+      if (alive) setBook(item);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  })();
+  return () => { alive = false; };
+}, [id]);
 
 
   return (
     <div className="container">
-      <header className="header">
-        <h1 className="header__title">{book.title}</h1>
-        <p className="header__subtitle">{book.author} · {book.location ?? "—"}</p>
-      </header>
-
-      <div className="card">
-        <h3 className="section__title">Shelf</h3>
-        <div className="kv-grid">
-          <div>ID: <code className="mono">{book.id}</code></div>
-          <div>Status: <strong>{book.shelfStatus}</strong></div>
-          <div>Pages: <strong>{book.pages}</strong></div>
-          <div>Rating: <strong>{book.rating}/5</strong></div>
-          <div>Favorite: <strong>{book.favorite ? "YES" : "NO"}</strong></div>
-          <div>Updated: <span className="mono">{new Date(book.updated_at).toLocaleString()}</span></div>
+     <header className="mb-6">
+          <h1 className="text-2xl font-bold">{book.title}</h1>
+          <p className="text-sm text-slate-500">{book.author} · {book.location ?? "—"}</p>
+        </header>
+        
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-2 text-base font-semibold">Shelf</h3>
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <div>ID: <span className="font-mono">{book.id}</span></div>
+            <div>Status: <span className="font-semibold">{book.shelfStatus}</span></div>
+            <div>Pages: <span className="font-semibold">{book.pages}</span></div>
+            <div>Rating: <span className="font-semibold">{book.rating}/5</span></div>
+            <div>Favorite: <span className="font-semibold">{book.favorite ? "YES" : "NO"}</span></div>
+            <div>Updated: <span className="font-mono">{new Date(book.updated_at).toLocaleString()}</span></div>
+          </dl>
         </div>
-      </div>
     </div>
   );
 }
@@ -489,54 +506,63 @@ if (Number.isNaN(id)) {
 
 ## Tehtävä 6 – Lataus, virheet ja viimeistely
 
-**Tavoite:** Viimeistele käytettävyys ja tyylit.
 
-1. Näytä “Loading…” kun dataa haetaan.
+**Tavoite:** Viimeistele ominaisuudet ja UX Tailwindilla.
 
-2. Näytä virheilmoitus (`.alert`) jos API heittää virheen.
+### Mitä sinun tulee toteuttaa (Plants)
 
-**A) Lataus/virhe**
+- Selkeät **loading**- ja **error**-tilat sekä listassa että detailissä.
+    
+- Yhtenäinen ulkoasu Tailwind-luokilla — ei omia CSS-tiedostoja.
+    
+- Painikkeiden tilat (esim. “Stop watering” punainen, “Water” vihreä).
+    
+- Badge-tyyli laitteen tilalle (ok/fault/offline) väreillä.
+    
+
+### Mallipalapalat (Books)
+
+**A) Loading & error**
 
 ```tsx
-{loading && <p>Loading…</p>}
-{error && <p className="alert">{error}</p>}
+{loading && <p className="text-slate-500">Loading…</p>}
+{error && <p className="rounded-md bg-rose-50 p-3 text-rose-700">{error}</p>}
 ```
 
+**B) Tilabadge valinnan kautta**
 
-3. Varmista, että kaikki tyylit ovat `globals.css`-tiedostossa, ei inline-tyylejä.
-    
-4. Lisää peruslayout- ja korttityylit (`.container`, `.grid`, `.card`, `.btn`, `.badge`).
+```tsx
+const badge =
+  status === "available" ? "bg-emerald-50 text-emerald-700" :
+  status === "damaged"   ? "bg-amber-50 text-amber-700"    :
+                           "bg-rose-50 text-rose-700";
+<span className={`inline-flex rounded-full px-2 py-0.5 text-xs ${badge}`}>{status}</span>
+```
 
+**C) Responsiivinen ruudukko ja kortit**
 
-**B) CSS-luokkia (sama ideapohja kuin Tailwind CSS:ssä)**
+```tsx
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {/* cards */}
+</div>
 
-```css
-/* globals.css — lyhyt idea, laajenna itse */
-.container{max-width:960px;margin:0 auto;padding:24px}
-.header{margin-bottom:16px}
-.header__title{margin:0;font-size:24px;font-weight:700}
-.header__subtitle{margin:0;color:#6b7280;font-size:14px}
+<div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+  {/* content */}
+</div>
+```
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
-.card__row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.card__title{margin:0;font-weight:700}
-.card__subtitle{margin:0;font-size:12px;color:#6b7280}
+**D) Nappien kontrastit**
 
-.kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:14px}
-
-.btn{border:0;border-radius:8px;padding:8px 12px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
-.btn--secondary{background:#111827}
-.btn--danger{background:#dc2626}
-.btn-row{display:flex;gap:8px;margin-top:12px}
-
-.badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px}
-.badge--ok{background:#ecfdf5;color:#10b981}
-.badge--fault{background:#fffbeb;color:#f59e0b}
-.badge--offline{background:#fef2f2;color:#ef4444}
-
-.alert{background:#fef2f2;color:#991b1b;padding:8px;border-radius:8px}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+```tsx
+<button className="rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
+  Primary Action
+</button>
+<button className="rounded-lg bg-slate-900 px-3 py-2 text-white hover:bg-black">
+  Secondary
+</button>
+<button className="rounded-lg bg-rose-600 px-3 py-2 text-white hover:bg-rose-700">
+  Danger
+</button>
 ```
 
 
@@ -546,6 +572,6 @@ if (Number.isNaN(id)) {
     
 - Yksityiskohtasivu toimii reittiparametrilla,
     
-- Virhe- ja lataustilat näkyvät oikein.
+- Virhe- ja lataustilat näkyvät oikein. Voit testata virhe- ja lataustiloja pakottamalla, esim. asettamalla `loading` muuttujan arvon manuaalisesti `true` :ksi
     
         
