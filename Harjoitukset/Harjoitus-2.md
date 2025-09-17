@@ -103,7 +103,7 @@ Avaa selain osoitteessa, jonka Vite näyttää (yleensä `http://localhost:5173`
 	cd server
   npm init -y
   npm i express cors swagger-jsdoc swagger-ui-express
-  npm i -D typescript ts-node-dev @types/node @types/express @types/cors
+  npm i -D typescript ts-node-dev @types/node @types/express @types/cors @types/swagger-jsdoc @types/swagger-ui-express
   npx tsc --init
  ```
 
