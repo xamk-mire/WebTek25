@@ -426,8 +426,17 @@ npm i -D @types/swagger-ui-express @types/swagger-jsdoc
  Lisää seuraavat koodit `src/app.ts`
 
 ```ts
-import swaggerUi from "swagger-ui-express";
-import { openapiSpec } from "./docs/openapi";
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+
+const openapiSpec = swaggerJsdoc({
+    definition: {
+      openapi: '3.0.3',
+      info: { title: 'Plants API', version: '1.0.0' },
+      servers: [{ url: 'http://localhost:8001' }],
+    },
+    apis: ['./src/routes/**/*.ts', './src/docs/components.ts'], // where your JSDoc comments live
+  });
 
 app.get("/api/openapi.json", (_req, res) => res.json(openapiSpec));
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
