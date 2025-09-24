@@ -51,6 +51,7 @@ mkdir plants-api && cd plants-api
 npm init -y
 npm i express cors
 npm i -D typescript ts-node-dev @types/express @types/node @types/cors
+npx tsc --init
 ```
 
 2. `tsconfig.json` (perus)
