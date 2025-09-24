@@ -393,6 +393,8 @@ let nextDeviceId = /* max(devices.id)+1 tai 4 */;
 
 Toteuta kontrollerit siten, että ne kutsuvat tehtävissä 2 sekä 3 toteutettuja metodeja.
 
+Luo kontrollereja varten oma tiedosto `src/controllers/plants.controller.ts`, jonka sisälle toteutat tarvittavat kontrollerit
+
 **Reitit (`src/routes/plants.routes.ts`):**
 
 - `GET /api/plants` → hakee listan kasveista
