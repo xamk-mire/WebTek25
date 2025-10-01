@@ -1,4 +1,4 @@
-# Harjoitus 3: Express + Prisma (PostgreSQL) & React + Tailwind (TypeScript)
+# Harjoitus 3: Express + Prisma (PostgreSQL)
 
 >[!NOTE]
 > Tämä harjoitus on suunniteltu Harjoitus-2 tehtävän jälkeen toteutettavaksi
