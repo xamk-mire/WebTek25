@@ -113,7 +113,7 @@ npm run prisma:generate
 
 Uusi enum tallentuu skeemaan ja taulu päivittyy. `generate` päivittää tyypit.
 
-> **Tarkista käyttämällä prisma studiota**: `npm run prisma:studio` → näet `Todo`-taulun.
+> **Tarkista käyttämällä prisma studiota**: `npx prisma studio` → näet `Todo`-taulun.
 
 ## 2 Prisman kytkentä Expressiin
 
