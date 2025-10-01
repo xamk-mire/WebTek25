@@ -41,9 +41,14 @@ Teet **kolme** migraatiota, jotta muutokset ovat läpinäkyviä.
 **`prisma/schema.prisma`**
 
 ```prisma
-generator client { provider = "prisma-client-js" }
+generator client {
+  provider = "prisma-client-js"
+}
 
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
 
 model Todo {
   id        String   @id @default(uuid())
