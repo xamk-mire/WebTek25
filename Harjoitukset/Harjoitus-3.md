@@ -32,12 +32,6 @@ npx prisma init
 ```
 
 Asenna Prisma client (runtime) ja Prisma CLI (dev). `prisma init` luo `prisma/schema.prisma` ja `.env`.
-### 1.2 Prisma & .env
-
-```bash
-npx prisma init
-```
-
 
 ### 1.3 Migraatiot vaiheittain
 
