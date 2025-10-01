@@ -91,7 +91,12 @@ npx prisma migrate dev --name add_done_status
 Lisää enum ja sarake oletuksella `GENERAL`:
 
 ```prisma
-enum Category { GENERAL WORK STUDY HOME }
+enum Category {
+  GENERAL
+  WORK
+  STUDY
+  HOME
+}
 
 model Todo {
   id        String   @id @default(uuid())
