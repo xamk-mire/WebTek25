@@ -56,8 +56,8 @@ model Todo {
 Aja:
 
 ```bash
-npm run prisma:migrate -- --name init_todos
-npm run prisma:generate
+npx prisma migrate dev --name init_todos
+npx prisma generate
 ```
 
 `migrate dev` luo ja ajaa migraation; `generate` tuottaa TypeScript‑clientin.
@@ -78,7 +78,7 @@ model Todo {
 Aja:
 
 ```bash
-npm run prisma:migrate -- --name add_done_status
+npx prisma migrate dev --name add_done_status
 ```
 
 
@@ -101,8 +101,8 @@ model Todo {
 Aja:
 
 ```bash
-npm run prisma:migrate -- --name add_category_enum
-npm run prisma:generate
+npx prisma migrate dev --name add_category_enum
+npx prisma generate
 ```
 
 Uusi enum tallentuu skeemaan ja taulu päivittyy. `generate` päivittää tyypit.
