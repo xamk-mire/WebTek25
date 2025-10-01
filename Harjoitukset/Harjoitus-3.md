@@ -5,6 +5,10 @@
 
 **Tavoite:** Rakennat täyden Todo-sovelluksen päivittämällä **Harjoitus-2:ssa** toteutettua Todo applikaatiota, jossa backend on **Express + TypeScript + Prisma (PostgreSQL)** ja dokumentointi **Swaggerilla**. Frontend on **React + Vite + TypeScript + Tailwind**. Käytät migraatioita lisätäksesi **status** (done) ja **kategoria** (enum) -ominaisuudet, ja tuot ne näkyviin käyttöliittymässä.
 
+## 0) Tehtävän alustus
+
+Luo harjoituksen toteutusta varten oma kansio ja kopioi toteuttamasi [Harjoitus-2:n](https://github.com/xamk-mire/WebTek25/blob/main/Harjoitukset/Harjoitus-2.md) toteutus sen sisälle, jonka jälkeen voit alkaa toteuttamaan harjoituksen tehtäviä.
+
 ## 1) Backend (Express + TS + Prisma + Swagger)
 
 ### 1.1 Asennus ja init
