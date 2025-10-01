@@ -265,7 +265,7 @@ Lisää tai päivitä **Swagger JSDoc**‑annotaatiot `src/routes/todos.ts`:
 
 ## 3) Frontend (React + Vite + TS + Tailwind)
 
-### 2.1 Tyypit & API-kutsut
+### 3.1 Tyypit & API-kutsut
 
 **`src/types.ts`** – käytä **enumia** kategoriassa:
 
@@ -288,7 +288,7 @@ export type Todo = {
 ```
 
 
-### 2.2 API-apufunktiot
+### 3.2 API-apufunktiot
 
 **`src/api.ts`** – kirjoita tai päivitä itse funktiot `listTodos`, `createTodo`, `updateTodo`, `deleteTodo` käyttäen `fetch`iä. Huomioi:
 
@@ -301,11 +301,11 @@ export type Todo = {
 - `deleteTodo(id: string): Promise<void>` DELETE
     
 
-### 2.3 App käyttöliittymän päivitys
+### 3.3 App käyttöliittymän päivitys
 
 **`src/App.tsx`** – tee UI seuraavin vaatimuksin (ulkoasun toteutus vapaa):
 
-- **Tila:** `todos`, `title`, `category`, `loading`, `busy`, `error`.
+- **Tila:** `todos`, `title`, `category`, `loading`, `error`.
     
 - **Lataus:** hae lista komponentin mountissa (`listTodos`).
     
@@ -322,7 +322,7 @@ export type Todo = {
 
 > Saat ohjenuoraksi kevyen skeletonin aiemmasta tehtävästä – varsinainen toteutus jää sinulle.
 
-### 2.4 Käynnistys ja testaus
+### 3.4 Käynnistys ja testaus
 
 ```bash
 npm run dev
