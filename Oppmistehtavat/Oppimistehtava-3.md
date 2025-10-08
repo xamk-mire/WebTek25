@@ -221,6 +221,9 @@ backend/
     
 3. Kirjoita README-tiedostoon, milloin seedejä ajetaan (esim. ensimmäinen käyttöönotto, tietokannan nollauksen jälkeen).
     
+> ![NOTE]
+> Kehitysympäristö saattaa madhollisesti herjata "virheellisestä" tyyppivirheistä, joista ei välttämättä tarvitse välittää
+> -> sovellus kääntyy ja toimii oikein "tyyppivirheestä" huolimatta, esim. `Cannot find name 'process'. Do you need to install type definitions for node? Try "npm i --save-dev @types/node"` 
 
 ### Hyväksymiskriteerit
 
