@@ -84,7 +84,7 @@ backend/
         
     - Luo **`.env.example`** tiedosto, jossa on esimerkkimuotoinen rivi ilman oikeita salasanoja.
         
-4. Dokumentoi README-tiedostoon, miten tietokanta käynnistetään ja miten yhteys testataan.
+4. Dokumentoi README-tiedostoon, miten tietokanta yhteys toimii env muuttujien avulla.
     
 
 ### Hyväksymiskriteerit
