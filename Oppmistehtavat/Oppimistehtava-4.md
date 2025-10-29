@@ -306,8 +306,6 @@ Paranna sovelluksen käyttökokemusta lisäämällä **toast-ilmoitukset**, **la
             
         - Kasvin poisto
             
-        - Laitteen lisäys tai poisto
-            
     - Näytä virheviesti API-virheistä.
         
 2. **Latausindikaattorit**
