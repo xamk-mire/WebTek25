@@ -21,6 +21,7 @@ Asenna tarvittavat kirjastot backend-hakemistossa:
 
 ```bash
 npm install bcrypt jsonwebtoken
+npm install -D @types/bcrypt @types/jsonwebtoken
 ```
 
 ---
