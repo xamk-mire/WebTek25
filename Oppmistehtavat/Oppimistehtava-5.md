@@ -323,27 +323,52 @@ Käynnistä koko sovellus yhdellä komennolla Docker Compose -ympäristössä.
 
 ### 🪜 Vaiheittain
 
-#### 1️⃣ PostgreSQL-palvelu
+## 1) Ympäristömuuttujat
 
-**Tiedosto:** `docker-compose.yml` (root kansiossa)
+### 1A Jos käytät **lokaalia Postgresia** (ei Dockerissa)
 
-Lisää tietokantapalvelu:
+**Tiedosto:** `backend/.env`
 
-```yaml
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: plantsdb
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+```
+# Vaihda portti/osoite oman asennuksesi mukaan:
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/plantsdb?schema=public"
+JWT_SECRET="supersecret"
+PORT=8001
 ```
 
-#### 2️⃣ Backend Dockerfile
+> 💡 Kun backend pyörii **Dockerissa**, `localhost` viittaa konttiin, ei koneeseesi.
+> 
+> - **macOS/Windows (Docker Desktop)**: käytä `host.docker.internal`
+>     
+> - **Linux**: käytä Dockerin gatewayta `172.17.0.1` (yleensä), tai määritä `extra_hosts`.
+>     
+
+**Esim. backend Dockerissa + lokaali Postgres (mac/Win):**
+
+```
+DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/plantsdb?schema=public"
+```
+
+**Esim. backend Dockerissa + lokaali Postgres (Linux):**
+
+```
+DATABASE_URL="postgresql://postgres:postgres@172.17.0.1:5432/plantsdb?schema=public"
+```
+
+### 1B. Jos käytät **Docker-Postgresia**
+
+**Tiedosto:** `backend/.env`
+
+```
+# HUOM: hostname on compose-palvelun nimi "db"
+DATABASE_URL="postgresql://postgres:postgres@db:5432/plantsdb?schema=public"
+JWT_SECRET="supersecret"
+PORT=8001
+```
+
+
+
+## 2) Dockerfilet (samat molemmissa malleissa)
 
 **Tiedosto:** `backend/Dockerfile`
 
@@ -358,12 +383,10 @@ EXPOSE 8001
 CMD ["node", "dist/server.js"]
 ```
 
-#### 3️⃣ Frontend Dockerfile
-
 **Tiedosto:** `frontend/Dockerfile`
 
 ```dockerfile
-FROM node:20 as build
+FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -375,13 +398,202 @@ COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 ```
 
-#### 4️⃣ Käynnistä palvelut
+## 3) docker-compose.yml – molemmat vaihtoehdot profiileilla
 
-```bash
-docker compose up --build
+**Tiedosto:** `docker-compose.yml`
+
+```yaml
+version: "3.9"
+
+services:
+  # VAIHTOEHTO A: Docker-Postgres (käynnistyy vain profiililla: db)
+  db:
+    image: postgres:16
+    profiles: ["db"]     # <— HUOM! tämä käynnistyy vain --profile db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: plantsdb
+    ports:
+      - "5432:5432"      # valinnainen; poista jos et halua julkaista hostille
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      # HUOM: Kun käytät Docker-Postgresia, osoita "db"-palveluun
+      # Kun käytät lokaalisti, yliaja .env:llä (host.docker.internal / 172.17.0.1)
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT:-8001}
+    depends_on:
+      # Jos käytät Docker-Postgresia, lisää riippuvuudeksi db-profiili:
+      - db
+    ports:
+      - "8001:8001"
+    # Linux: mahdollista auttaa yhteydessä hostin tietokantaan
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Jos käytät Nginxiä staattiseen palv. ja backend on eri portissa,
+      # määritä Vite buildissa osoite, tai käytä samaa originia reverse-proxyn kautta.
+      # VITE_API_BASE: "http://localhost:8001/api"
+      VITE_API_BASE: "/api"  # jos reverse-proxy käytössä
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  db_data:
 ```
 
-Voit myös käyttää Docker Desktop sovellusta docker konttien ajoon.
+> 🗒️ **Selitys profiileista:**
+> 
+> - Käynnistä **Docker-Postgres** profiililla: `--profile db`
+>     
+> - Jos käytät **lokaalia Postgresia**, ÄLÄ käytä `--profile db` ⇒ `db`-palvelu ei käynnisty.
+>     
 
-> 💬 **Miksi:**  
-> Docker varmistaa, että sovellus toimii samanlaisessa ympäristössä kaikilla käyttäjillä – riippumatta käyttöjärjestelmästä.
+---
+
+## 4) Käynnistyskomennot
+
+### A) **Docker-Postgres** (kaikki kontissa)
+
+1. Varmista, että `backend/.env` käyttää `db` hostia:
+    
+    ```
+    DATABASE_URL="postgresql://postgres:postgres@db:5432/plantsdb?schema=public"
+    ```
+    
+2. Käynnistä:
+    
+    ```bash
+    docker compose --profile db up --build
+    ```
+    
+3. Aja migraatiot:
+    
+    ```bash
+    docker compose exec backend npx prisma migrate deploy
+    ```
+    
+4. (Valinn.) siemen-data:
+    
+    ```bash
+    docker compose exec backend npm run prisma:seed
+    ```
+    
+
+### B) **Lokaali Postgres** (vain backend+frontend kontissa)
+
+1. Varmista `backend/.env` osoittaa **hostin** Postgresiin:
+    
+    - mac/Win:
+        
+        ```
+        DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/plantsdb?schema=public"
+        ```
+        
+    - Linux:
+        
+        ```
+        DATABASE_URL="postgresql://postgres:postgres@172.17.0.1:5432/plantsdb?schema=public"
+        ```
+        
+2. Käynnistä **ilman profiilia**:
+    
+    ```bash
+    docker compose up --build
+    ```
+    
+3. Aja migraatiot hostiin:
+    
+    ```bash
+    docker compose exec backend npx prisma migrate deploy
+    ```
+    
+
+---
+
+## 5) Vite/Frontend API-osoite
+
+- **Sama origin** (suositeltu): laita Nginx/reverse-proxy ohjaamaan `/api` → backend.  
+    Tällöin `frontend/.env`:
+    
+    ```
+    VITE_API_BASE=/api
+    ```
+    
+- **Eri origin**: aseta **CORS** backendissä ja osoita URL:iin:
+    
+    ```
+    VITE_API_BASE=http://localhost:8001/api
+    ```
+    
+
+> 💡 Varmista, että frontend buildaa oikealla ympäristömuuttujalla (Dockerfile käyttää `npm run build`).
+
+---
+
+## 6) Prisma-komennot (molemmissa malleissa)
+
+**Ensimmäinen ajokerta / skeemamuutokset:**
+
+```bash
+# Generoi client
+docker compose exec backend npx prisma generate
+
+# Migraatiot (dev tai deploy)
+docker compose exec backend npx prisma migrate deploy
+# tai kehityksessä:
+# docker compose exec backend npx prisma migrate dev --name init
+```
+
+---
+
+## 7) Yleiset ongelmat & ratkaisut
+
+- **Backend ei saa yhteyttä tietokantaan**
+    
+    - Jos käytät **Docker-Postgresia**, varmista `DATABASE_URL` hostiksi `db` (Compose-palvelun nimi).
+        
+    - Jos käytät **lokaalia Postgresia**, käytä **host.docker.internal** (mac/Win) tai **172.17.0.1** (Linux).
+        
+- **`ECONNREFUSED 5432`**
+    
+    - Postgres ei vielä valmis → odota hetki ja yritä migraatiot uudelleen.
+        
+    - Composition `depends_on` ei odota terveystilaa — voit lisätä healthcheckin tai ajaa migraatiot manuaalisesti hieman myöhemmin.
+        
+- **CORS-virheet**
+    
+    - Jos frontend ja backend eri originissa, salli CORS backendissä (`app.use(cors({ origin: "http://localhost:8080" }))`).
+        
+    - Suosi samaa originia (`/api` reverse-proxy).
+        
+- **SSL/sertifikaatit** (jos käytät pilvipalvelua)
+    
+    - Päivitä `DATABASE_URL`-parametreihin `?sslmode=require` tms. hostisi ohjeiden mukaan.
+        
+
+---
+
+## 8) Pika-checklist 
+
+-  Päätitkö käyttää **lokaalia** vai **Docker**-Postgresia?
+    
+-  Asetitko `backend/.env` oikein (HOSTNAME: `db` vs `host.docker.internal`/`172.17.0.1`)?
+    
+-  Käynnistitko oikealla komennolla (`--profile db` vai ilman)?
+    
+-  Ajoitko **Prisma migrate** -komennot onnistuneesti?
+    
+-  Toimiiko frontend–backend yhteys (API BASE, CORS)?
+    
+
