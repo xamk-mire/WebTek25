@@ -378,6 +378,7 @@ PORT=8001
 FROM node:20
 WORKDIR /app
 COPY package*.json ./
+COPY .env .env
 RUN npm ci
 COPY . .
 RUN npx prisma generate && npm run build
@@ -405,61 +406,52 @@ EXPOSE 80
 **Tiedosto:** `docker-compose.yml`
 
 ```yaml
-version: "3.9"
-
 services:
-  # VAIHTOEHTO A: Docker-Postgres (käynnistyy vain profiililla: db)
   db:
     image: postgres:16
-    profiles: ["db"]     # <— HUOM! tämä käynnistyy vain --profile db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: plantsdb
-    ports:
-      - "5432:5432"      # valinnainen; poista jos et halua julkaista hostille
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    # ...
 
   backend:
-    build: ./backend # <-- Muokkaa vastaamaan oman backend kansion nimeä
+    build: ./backend # <-- muuta vastaamaan omaa backend kansiota
     environment:
-      # HUOM: Kun käytät Docker-Postgresia, osoita "db"-palveluun
-      # Kun käytät lokaalisti, yliaja .env:llä (host.docker.internal / 172.17.0.1)
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
-      PORT: ${PORT:-8001}
-    # Jos käytät Docker-Postgresia, lisää riippuvuudeksi db-profiili:
-    #depends_on:
-    #  - db
+      PORT: 8001
     ports:
-      - "8001:8001"
-    # Linux: mahdollista auttaa yhteydessä hostin tietokantaan
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
+      - '8001:8001' # 👈 exposes backend on host:8001
 
-  frontend:
-    build: ./frontend # <-- Muokkaa vastaamaan oman frontend kansion nimeä
+  # Dev mode with Vite:
+  frontend-dev:
+    build: ./frontend # <-- muuta vastaamaan omaa frontend kansiota
+    command: npm run dev -- --host 0.0.0.0 --port 5173
     environment:
-      # Jos käytät Nginxiä staattiseen palv. ja backend on eri portissa,
-      # määritä Vite buildissa osoite, tai käytä samaa originia reverse-proxyn kautta.
-      # VITE_API_BASE: "http://localhost:8001/api"
-      VITE_API_BASE: "/api"  # jos reverse-proxy käytössä
+      VITE_API_BASE: 'http://localhost:8001/api'
+    ports:
+      - '5173:5173'
     depends_on:
       - backend
+
+  # Prod/static version (optional):
+  frontend:
+    build: ./moisture-frontend
+    environment:
+      VITE_API_BASE: 'http://localhost:8001/api'
     ports:
-      - "8080:80"
+      - '8080:80' # Nginx or similar
+    depends_on:
+      - backend
 
-volumes:
-  db_data:
 ```
+**Tiedosto** `.env` (lisää tiedosto root tasolle)
 
-> 🗒️ **Selitys profiileista:**
-> 
-> - Käynnistä **Docker-Postgres** profiililla: `--profile db`
->     
-> - Jos käytät **lokaalia Postgresia**, ÄLÄ käytä `--profile db` ⇒ `db`-palvelu ei käynnisty.
->     
+```
+DATABASE_URL="postgresql://postgres:password@host.docker.internal:5432/plantsdb?schema=public"
+PORT=8001
+JWT_SECRET="supersecretkey"
+MOCK_REALTIME=false
+```
+> Docker composer tarvitsee DATABASE_URL:n sekä JWT_SECRET
+> Vaihtoehtoisesti olisi käydä lukemassa tiedot backend toteutuksesta
 
 ---
 
