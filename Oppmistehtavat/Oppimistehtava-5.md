@@ -420,16 +420,16 @@ services:
       - db_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    build: ./backend # <-- Muokkaa vastaamaan oman backend kansion nimeä
     environment:
       # HUOM: Kun käytät Docker-Postgresia, osoita "db"-palveluun
       # Kun käytät lokaalisti, yliaja .env:llä (host.docker.internal / 172.17.0.1)
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       PORT: ${PORT:-8001}
-    depends_on:
-      # Jos käytät Docker-Postgresia, lisää riippuvuudeksi db-profiili:
-      - db
+    # Jos käytät Docker-Postgresia, lisää riippuvuudeksi db-profiili:
+    #depends_on:
+    #  - db
     ports:
       - "8001:8001"
     # Linux: mahdollista auttaa yhteydessä hostin tietokantaan
@@ -437,7 +437,7 @@ services:
     #   - "host.docker.internal:host-gateway"
 
   frontend:
-    build: ./frontend
+    build: ./frontend # <-- Muokkaa vastaamaan oman frontend kansion nimeä
     environment:
       # Jos käytät Nginxiä staattiseen palv. ja backend on eri portissa,
       # määritä Vite buildissa osoite, tai käytä samaa originia reverse-proxyn kautta.
