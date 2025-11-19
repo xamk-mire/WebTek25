@@ -319,6 +319,8 @@ Käytä DaisyUI-komponentteja:
 
 Käynnistä koko sovellus yhdellä komennolla Docker Compose -ympäristössä. 
 
+(Prisma + Docker)[https://www.prisma.io/docs/guides/docker]
+
 ---
 
 ### 🪜 Vaiheittain
